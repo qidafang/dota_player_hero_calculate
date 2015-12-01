@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="heros.json"></script>
+    <script src="players.json"></script>
+    <script>
+    var scores = ['dps', 'push', 'gank', 'support', 'meat', 'war'];
+
+    function calc(name){
+
+        var player = players[name];
+
+        var result = [];
+        for(var i = 0; i < heros.length; i++){
+            var h = heros[i];
+            var ts = h.tags.split(",");
+            var num = 0;
+            var txt = "";
+            ts.forEach(function(t){
+                if(player[t] == undefined){
+                    //..
+                }else{
+                    num += player[t];
+                    txt += (t + ":" + player[t] + " ");
+                }
+            });
+
+            var totalScore = 0;
+            scores.forEach(function(s){
+                var heroScore = h[s];
+                totalScore += heroScore;
+            });
+            var maxScore = (totalScore / 6) * 2;//理论最大值，该英雄所有指标加总除以6再乘以2，然后用任一指标除以此值，即得该英雄该指标的招牌程度
+
+            scores.forEach(function(s){
+                var playerScore = player[s] / 2.5;//最大值为8
+                var heroScore = (h[s] / maxScore) * 10;//平均值为5
+                var value = (playerScore - 0) * (heroScore - 0);//相乘最大值为40
+                value = value.toFixed(2);
+                num += value * 1;
+                txt += (s + ":" + value + " ");
+            });
+            result.push({ name : h.name, num : num, txt : txt});
+        }
+        result.sort(function(a, b){
+            return b.num - a.num;
+        });
+        outClear();
+        result.forEach(function(r){
+            var look = 1;
+            if(player.look.indexOf(r.name) != -1 && look){
+                outWarn(r.name + "::" + r.num.toFixed(2) + ", 明细：" + r.txt);
+            }else{
+                outLog(r.name + "::" + r.num.toFixed(2) + ", 明细：" + r.txt);
+            }
+        })
+
+    }
+
+    //清空输出区域
+    function outClear(){
+        document.getElementById('out').innerHTML = "";
+    }
+
+    //输出关注信息
+    function outWarn(s){
+        var div = document.createElement('div');
+        div.innerHTML = s;
+        div.style.backgroundColor = '#FFFF00';
+        document.getElementById('out').appendChild(div);
+    }
+
+    //输出普通信息
+    function outLog(s){
+        var div = document.createElement('div');
+        div.innerHTML = s;
+        div.style.backgroundColor = '#FFFFFF';
+        document.getElementById('out').appendChild(div);
+    }
+    </script>
+</head>
+<body>
+    <button onclick="calc('duge')">杜哥</button>
+    <button onclick="calc('feishen')">匪神</button>
+    <button onclick="calc('guoguo')">蝈蝈</button>
+    <button onclick="calc('laowu')">老吴</button>
+    <button onclick="calc('pangzi')">胖子</button>
+
+    <div id="out">
+
+    </div>
+    <script>
+    calc('pangzi');
+    </script>
+</body>
+</html>
