@@ -1,6 +1,6 @@
 #dota_player_hero_calculate
 
-一个dota玩家与英雄契合度的计算器，包括两部分代码：
+一个dota玩家与英雄契合度的计算器（[查看效果](http://page.zidafone.com/demos/dota-player/)），包括两部分代码：
 
 * python的scrapy爬虫，总体思路是page->model->result，从网页中提取数据，组成有意义的数据结构，再拿这数据结构做点什么。
 
