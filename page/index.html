@@ -92,6 +92,16 @@
             }
            })(p);
            document.getElementById('btns').appendChild(btn);
+
+
+           var box = document.createElement('input');
+           box.type = 'checkbox';
+           box.name = 'team';
+           box.value = p;
+           document.getElementById('team').appendChild(box);
+           var lbl = document.createElement('label');
+           lbl.innerText = p;
+           document.getElementById('team').appendChild(lbl);
         }
     }
     </script>
@@ -102,8 +112,109 @@
     <div id="out">
 
     </div>
+
+    <div id="team">
+
+    </div>
+    <button onclick="team();">计算阵容</button>
     <script>
     initButtons();
+
+    function team(){
+        var choices = [];
+
+        var pos = ['dps', 'meat', 'gank', 'war', 'support'];
+        //var t = ['杜哥', '匪神', '刘神', '老吴', '呆神'];
+        //var t = ['蝈蝈', '小新', '哲哥', '胖子', '金龙'];
+        var t = [];
+        var boxes = document.getElementsByName('team');
+        for(var i = 0; i < boxes.length; i++){
+            var b = boxes[i];
+            if(b.checked){
+                t.push(b.value);
+            }
+        }
+        if(t.length != 5){
+            alert("必须选择五个成员组成团队！");
+            return;
+        }
+
+        var step = 0;
+        var flags = [-1, -1, -1, -1, -1];
+        var count = 0;
+
+        flags[0] = 0;
+        while(true){
+            if(flags[step] < 5){//ok  i < xx.length
+                //...
+                if(step < 4){
+                    step++;
+                }else{
+                    //a result!
+                }
+                flags[step] += 1;//i++
+            }else{//i == xx.length
+                if(step > 0){//pop
+                    flags[step] = -1;//i = -1
+                    flags[step - 1] += 1;//j++
+                    step--;
+                }else{
+                    break;
+                }
+            }
+            if(flags.indexOf(5) == -1 && flags.indexOf(-1) == -1 && checkResult(flags)){
+                var info = "";
+                var scores = 0;
+                for(var i = 0; i < flags.length; i++){
+                    var posName = pos[i];
+                    var playerName = t[flags[i]];
+
+                    var p = players[playerName];
+                    var score = 0;
+                    if(i == 0){
+                        score = p.dps * 2 + p.war;
+                    }else if(i == 1){
+                        score = p.dps + p.war + p.gank;
+                    }else if(i == 2){
+                        score = p.gank + p.war + p.meat;
+                    }else if(i == 3){
+                        score = p.gank + p.war + p.support;
+                    }else if(i == 4){
+                        score = p.support * 2 + p.gank;
+                    }
+
+                    scores += score;
+                    info += (playerName + "担任" + (i+1) + "号位（适合度：" + score + "） ");
+                }
+                var choice = {info : info, score : scores};
+                choices.push(choice);
+            }
+        }    
+
+        choices.sort(function(a, b){
+            return -(a.score - b.score);
+        });
+
+        outClear();
+        for(var i = 0; i < 5; i++){
+            var c = choices[i];
+            var msg = c.info + "得分：" + c.score;
+            outLog(msg);
+        }
+    }
+
+    function checkResult(fs){
+        var checker = [];
+        for(var i = 0; i < fs.length; i++){
+            var number = fs[i];
+            if(checker.indexOf(number) != -1){
+                return false;
+            }else{
+                checker.push(number);
+            }
+        }
+        return true;
+    }
     </script>
 </body>
 </html>
