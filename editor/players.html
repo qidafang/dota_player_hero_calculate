@@ -1,0 +1,287 @@
+<html>
+<head>
+    <title id="title">427Editor</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <style>
+        body{
+            overflow : hidden;
+        }
+        th, td{
+            font-size : 10px;
+            width: 30px;
+        }
+        .name{
+            width: 50px;
+        }
+        .odd{
+            background-color : #AAA;
+        }
+        .even{
+            background-color : #777;
+        }
+        .odd .range{
+            background-color : #7A7;
+        }
+        .even .range{
+            background-color : #373;
+        }
+        .odd .color{
+            background-color : #77A;
+        }
+        .even .color{
+            background-color : #337;
+        }
+        .odd .type{
+            background-color : #A77;
+        }
+        .even .type{
+            background-color : #733;
+        }
+        .odd .usage{
+            background-color : #AA7;
+        }
+        .even .usage{
+            background-color : #773;
+        }
+        input[type=text]{
+            width : 28px;
+        }
+        #name{
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+
+    选择要打开的文件：<input type="file" id="f"/>
+    <br>
+    <textarea id="t" style="width:100%;height:400px;display:none;"></textarea>
+        <table id="headerTable">
+            <tr id="headers">
+                <th class="name"></th>
+            </tr>
+        </table>
+        <div id="herosDiv">
+            <table id="heros">
+            </table>
+        </div>
+    <br>
+    <input type="text" id="name"/>
+    <input type="button" value="添加" onclick="add()"/>
+
+    <input type="button" id="w" value="写入文件" onclick="save()" style="display:none"/>
+    <br>
+    保存为文件：<input type="file" id="s" value="保存文件" nwsaveas/>
+
+
+
+    <script src="js/_my_common_.js"></script>
+    <script>
+    var tagNames = [
+        '近战', '远程',
+        '力量', '敏捷', '智力',
+        '辅助', '法师', '打野', '肉盾', 'Gank', '后期', '大后期',
+        '点控', '小团控', '团控', '减速', '沉默', '爆发',
+        '推进', '治疗', '召唤', '隐身', '闪烁',
+        '不稳定', '特殊', '多线',
+        'dps', 'push', 'gank', 'support', 'meat', 'war'
+        ];
+
+    //初始化表头
+    for(var i = 0; i < tagNames.length; i++){
+        var tn = tagNames[i];
+        var header = document.createElement('th');
+        var txt = tn;
+        if(tn == 'dps'){
+            txt = '输出'; 
+        }else if(tn == 'push'){
+            txt = '推进'; 
+        }if(tn == 'gank' || tn == 'Gank'){
+            txt = '抓人'; 
+        }if(tn == 'support'){
+            txt = '辅助'; 
+        }if(tn == 'meat'){
+            txt = '肉盾'; 
+        }if(tn == 'war'){
+            txt = '团战'; 
+        }
+        header.innerHTML = txt;
+        header.onclick = sortHeros;
+        $('headers').appendChild(header);
+    }
+
+    var path = null;
+
+    var fs = require("fs");
+
+    var gui = require("nw.gui");
+    var win = gui.Window.get();
+    var app = gui.App;
+    var argv = (app.argv);
+
+    //文件右键打开方式选择本程序时，会将该文件路径作为第一个参数传入
+    if(argv.length == 1){
+        openFile(argv[0]);
+    }else{
+        //openFile("C:\\Users\\Administrator\\Desktop\\test\\players.json");
+    }
+
+    var theHeros;
+
+    //打开文件的工作方法
+    function openFile(filePath){
+        setPath(filePath);
+        fs.readFile(path, function(err, data){
+            if(err){
+                log("打开失败");
+            }else{
+                var js = data + "";
+                eval(js);
+                theHeros = players;
+
+                setTable();
+            }
+        });
+    }
+
+    function setTable(){
+        $('heros').innerHTML = "";
+        for(var i in theHeros){
+            var h = theHeros[i];
+
+            var newTr = document.createElement('tr');
+            newTr.id = "hero_" + h.id;
+            newTr.className = i % 2 == 1 ? "odd" : "even";//隔行换色
+            $('heros').appendChild(newTr);
+            var nameTh = document.createElement('th');
+            nameTh.className = "name";
+            nameTh.innerHTML = i;
+            newTr.appendChild(nameTh);
+
+            for(var j = 0; j < tagNames.length; j++){
+                var tn = tagNames[j];
+                var attrTd = document.createElement('td');
+                var tdCls = "";
+                if(j < 2){
+                    tdCls = "range";
+                }else if(j < 5){
+                    tdCls = "color";
+                }else if(j < 12){
+                    tdCls = "type";
+                }else if(j < 23){
+                    tdCls = "usage";
+                }
+                attrTd.className = tdCls;
+                var attrCheckBox = document.createElement('input');
+                attrCheckBox.type = "text";
+                attrTd.appendChild(attrCheckBox);
+                newTr.appendChild(attrTd);
+
+                attrCheckBox.value = h[tn] ? h[tn] : 0;
+            }
+
+        }
+
+        $("w").style.display = "";
+    }
+
+    var lastTag = "";
+    var asc = true;
+
+    function sortHeros(){
+        var tagName = this.innerHTML;
+        if(lastTag == tagName && asc){
+            asc = false;
+        }else{
+            asc = true;
+        }
+        theHeros.sort(function(a, b){
+            var aHas = checkHeroHasTag(a, tagName);
+            var bHas = checkHeroHasTag(b, tagName);
+            if(asc){
+                return (aHas && !bHas) ? -1 : ((bHas && !aHas) ? 1 : 0);
+            }else{
+                return (aHas && !bHas) ? 1 : ((bHas && !aHas) ? -1 : 0);
+            }
+        });
+        setTable();
+        lastTag = tagName;
+    }
+
+    function checkHeroHasTag(h, t){
+        var ts = h.tags.split(",");
+        return ts.indexOf(t) != -1;
+    }
+
+    //打开文件
+    $("f").addEventListener("change", function(e){
+        if(this.value){
+            openFile(this.value);
+        }
+    }, false);
+
+    //写入文件
+    function save(){
+        var trs = $("heros").getElementsByTagName("tr");
+
+        var index = 0;
+        for(var i in theHeros){
+
+            var hero = theHeros[i];
+            var tr = trs[index];
+            var tds = tr.getElementsByTagName("td");
+
+            for(var j = 0; j < tds.length; j++){
+                var td = tds[j];
+                var input = td.getElementsByTagName("input")[0];
+                var tagName = tagNames[j];
+                hero[tagName] = input.value * 1;
+            }
+
+            index++;
+        }
+
+        var resultJson = JSON.stringify(theHeros);
+        var result = "var players = " + resultJson;
+
+        fs.writeFile(path, result, function(err){
+            if(err){
+                alert("写入失败");
+            }else{
+                alert("写入成功");
+            }
+        });
+    }
+
+    //存储为新文件
+    $("s").addEventListener("change", function(e){
+        if(this.value){
+            setPath(this.value);
+            var content = $("t").value;
+            fs.writeFile(path, content, function(err){
+                if(err){
+                    log("保存失败");
+                }else{
+                    log("保存成功");
+                }
+            });
+        }
+    });
+
+    function setPath(p){
+        path = p;
+        $("title").innerHTML = p + " - 427Editor";
+
+        //使标题改变生效，解决奇怪的问题
+        win.hide();
+        win.show();
+    }
+
+    function add(){
+        var name = $('name').value;
+        theHeros[name] = {};
+        setTable();
+    }
+    </script> 
+</body>
+</html>
