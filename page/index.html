@@ -97,6 +97,7 @@
            var box = document.createElement('input');
            box.type = 'checkbox';
            box.name = 'team';
+           box.checked = 'checked';
            box.value = p;
            document.getElementById('team').appendChild(box);
            var lbl = document.createElement('label');
@@ -134,8 +135,8 @@
                 t.push(b.value);
             }
         }
-        if(t.length != 5){
-            alert("必须选择五个成员组成团队！");
+        if(t.length < 5){
+            alert("必须选择至少五个成员组成团队！");
             return;
         }
 
@@ -145,9 +146,9 @@
 
         flags[0] = 0;
         while(true){
-            if(flags[step] < 5){//ok  i < xx.length
+            if(flags[step] < t.length){//ok  i < xx.length
                 //...
-                if(step < 4){
+                if(step < flags.length - 1){
                     step++;
                 }else{
                     //a result!
@@ -162,7 +163,7 @@
                     break;
                 }
             }
-            if(flags.indexOf(5) == -1 && flags.indexOf(-1) == -1 && checkResult(flags)){
+            if(flags.indexOf(t.length) == -1 && flags.indexOf(-1) == -1 && checkResult(flags)){
                 var info = "";
                 var scores = 0;
                 for(var i = 0; i < flags.length; i++){
