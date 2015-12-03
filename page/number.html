@@ -86,6 +86,9 @@
     <script src="players/_dage357.js"></script>
 </head>
 <body>
+    <button onclick="go('胜场')">考察玩家倾向性</button>
+    <button onclick="go('胜率')">考察指标胜率</button>
+
     <table>
         <thead>
         <tr id="titleTr">
@@ -102,6 +105,7 @@
 
 
     <script>
+
     var tagNames = [
     '近战', '远程',
     '力量', '敏捷', '智力',
@@ -144,142 +148,133 @@
         //'357' : [dage357]
     };
 
-    var heroCount = {};//英雄统计汇总
-    heros.forEach(function(h){
-        heroCount[h.name] = {
-            'name' : h.name,
-            'total' : 0,
-            'win' : 0,
-            'herokill' : 0,
-            'roshan' : 0,
-            'mvp' : 0,
-            'offline' : 0
-        };
-    });
+    var heroCount;//英雄统计汇总
 
-    var results = {};//所有人的统计结果汇总集合
+    function go(goType){
+        $('titleTr').innerHTML = "<th></th>";
+        $('playerCount').innerHTML = "";
 
-    for(var n in they){
-        var records = they[n];
-        var playerResult = doIt(records, n);
-        results[n] = playerResult;
-    }
-
-    var playerCount = results;
-
-
-/*
-    var heroCountList = [];
-    for(var hName in heroCount){
-        heroCountList.push(heroCount[hName]);
-    };
-    var lookName = 'offline';
-    heroCountList.sort(function(a, b){
-        return - (a[lookName] / a.total - b[lookName] / b.total);
-    });
-    warn(lookName + "最高的英雄：");
-    for(var i = 0; i < heroCountList.length; i++){
-        var h = heroCountList[i];
-        console.log(h.name + "" + two(h[lookName] / h.total * 100));
-    }
-    warn("==========");
-*/
-
-    for(var n in they){
-
-        var pc = playerCount[n];
-
-        var records = they[n];
-
-        pc.matchs = 0;
-        pc.wins = 0;
-        pc.losts = 0;
-        pc.kills = 0;
-        pc.deads = 0;
-        pc.assists = 0;
-
-        pc.mvps = 0;
-        pc.pianjiangs = 0;
-        pc.yinghuns = 0;
-
-        pc.zhengbu = 0;
-        pc.fanbu = 0;
-        pc.yeguai = 0;
-        pc.ta = 0;//摧毁塔
-        pc.jingji = 0;//经济
-        pc.roshan = 0;//杀死boss次数
-
-        records.forEach(function(r){
-
-            pc.wins += r.mjInfos.Win;
-            pc.losts += r.mjInfos.Lost;
-            pc.matchs += (r.mjInfos.Win + r.mjInfos.Lost);
-            pc.kills += r.mjInfos.HeroKill;
-            pc.deads += r.mjInfos.HeroDeath;
-            pc.assists += r.mjInfos.HeroAssist;
-            pc.mvps += r.mjInfos.MVP;
-
-            pc.pianjiangs += r.mjInfos.PianJiang;
-            pc.yinghuns += r.mjInfos.YingHun;
-
-            pc.zhengbu += r.mjInfos.HeroHit;
-            pc.fanbu += r.mjInfos.HeroDeny;
-            pc.yeguai += r.mjInfos.NeutralKill;
-            pc.ta += r.mjInfos.HitTower;
-            pc.roshan += r.mjInfos.Roshan;
-
+        heroCount = {};
+        heros.forEach(function(h){
+            heroCount[h.name] = {
+                'name' : h.name,
+                'total' : 0,
+                'win' : 0,
+                'herokill' : 0,
+                'roshan' : 0,
+                'mvp' : 0,
+                'offline' : 0
+            };
         });
 
-        pc.jingji = (pc.zhengbu + pc.yeguai * 0.5 + pc.kills * 5 + pc.assists * 1 - pc.deads * 2 + pc.ta * 10) * 40 + 4000 * pc.matchs;
-        pc.ka = (pc.kills + pc.assists); 
 
-        pc.winRate = two(pc.wins / pc.matchs);//胜率
-        pc.killsPerMatch = two(pc.kills / pc.matchs);//场均人头
-        pc.deadsPerMatch = two(pc.deads / pc.matchs);//场均死亡
-        pc.assistsPerMatch = two(pc.assists / pc.matchs);//场均助攻
-        pc.kda = two((pc.kills + pc.assists) / pc.deads);//kda
-        pc.kHead = two(pc.kills / pc.assists);//k头指数
-        pc.mvpAndHunPer100Matches = two((pc.mvps + pc.yinghuns) / pc.matchs * 100);//场均mvp&英魂
-        pc.zhengbuPerMatch = two(pc.zhengbu / pc.matchs);//场均正补
-        pc.yeguaiPerMatch = two(pc.yeguai / pc.matchs);//场均击杀野怪
-        pc.moneyPerMatch = two(pc.jingji / pc.matchs);//场均金钱
-        pc.moneyPerHeadOrAssist = two(pc.jingji / pc.ka);//每人头or助攻所需金钱
-        pc.bad = two(pc.jingji / (pc.kills + pc.assists) * (pc.losts / (pc.wins + pc.losts)));//毒瘤指数
-        pc.towersPer100Matches = two(pc.ta / pc.matchs * 100);//每100盘推塔数
-        pc.bossPer100Matches = two(pc.roshan / pc.matchs * 100);//每100盘击杀肉山数
-    }
 
-    var onePlayer = playerCount['杜哥'];
-    for(var pname in playerCount){
-        var th = document.createElement('th');
-        th.innerHTML = pname;
-        document.getElementById('titleTr').appendChild(th);
-    }
+        var results = {};//所有人的统计结果汇总集合
 
-    var index = 0;
-    for(var t in onePlayer){
-        var tr = document.createElement('tr');
-        var nameTd = document.createElement('td');
-        nameTd.innerHTML = numberName(t) || t;
-        nameTd.style.backgroundColor = backgroundColor(index);
-        tr.appendChild(nameTd);
-        for(var pname in playerCount){
-            var valueTd = document.createElement('td');
-            var opc = playerCount[pname];
-            valueTd.innerHTML = opc[t];
-            tr.appendChild(valueTd);
+        for(var n in they){
+            var records = they[n];
+            var playerResult = doIt(records, n, goType);
+            results[n] = playerResult;
         }
-        $('playerCount').appendChild(tr);
-        index++;
-    }
 
+        var playerCount = results;
+
+        for(var n in they){
+
+            var pc = playerCount[n];
+
+            var records = they[n];
+
+            pc.matchs = 0;
+            pc.wins = 0;
+            pc.losts = 0;
+            pc.kills = 0;
+            pc.deads = 0;
+            pc.assists = 0;
+
+            pc.mvps = 0;
+            pc.pianjiangs = 0;
+            pc.yinghuns = 0;
+
+            pc.zhengbu = 0;
+            pc.fanbu = 0;
+            pc.yeguai = 0;
+            pc.ta = 0;//摧毁塔
+            pc.jingji = 0;//经济
+            pc.roshan = 0;//杀死boss次数
+
+            records.forEach(function(r){
+
+                pc.wins += r.mjInfos.Win;
+                pc.losts += r.mjInfos.Lost;
+                pc.matchs += (r.mjInfos.Win + r.mjInfos.Lost);
+                pc.kills += r.mjInfos.HeroKill;
+                pc.deads += r.mjInfos.HeroDeath;
+                pc.assists += r.mjInfos.HeroAssist;
+                pc.mvps += r.mjInfos.MVP;
+
+                pc.pianjiangs += r.mjInfos.PianJiang;
+                pc.yinghuns += r.mjInfos.YingHun;
+
+                pc.zhengbu += r.mjInfos.HeroHit;
+                pc.fanbu += r.mjInfos.HeroDeny;
+                pc.yeguai += r.mjInfos.NeutralKill;
+                pc.ta += r.mjInfos.HitTower;
+                pc.roshan += r.mjInfos.Roshan;
+
+            });
+
+            pc.jingji = (pc.zhengbu + pc.yeguai * 0.5 + pc.kills * 5 + pc.assists * 1 - pc.deads * 2 + pc.ta * 10) * 40 + 4000 * pc.matchs;
+            pc.ka = (pc.kills + pc.assists); 
+
+            pc.winRate = two(pc.wins / pc.matchs);//胜率
+            pc.killsPerMatch = two(pc.kills / pc.matchs);//场均人头
+            pc.deadsPerMatch = two(pc.deads / pc.matchs);//场均死亡
+            pc.assistsPerMatch = two(pc.assists / pc.matchs);//场均助攻
+            pc.kda = two((pc.kills + pc.assists) / pc.deads);//kda
+            pc.kHead = two(pc.kills / pc.assists);//k头指数
+            pc.mvpAndHunPer100Matches = two((pc.mvps + pc.yinghuns) / pc.matchs * 100);//场均mvp&英魂
+            pc.zhengbuPerMatch = two(pc.zhengbu / pc.matchs);//场均正补
+            pc.yeguaiPerMatch = two(pc.yeguai / pc.matchs);//场均击杀野怪
+            pc.moneyPerMatch = two(pc.jingji / pc.matchs);//场均金钱
+            pc.moneyPerHeadOrAssist = two(pc.jingji / pc.ka);//每人头or助攻所需金钱
+            pc.bad = two(pc.jingji / (pc.kills + pc.assists) * (pc.losts / (pc.wins + pc.losts)));//毒瘤指数
+            pc.towersPer100Matches = two(pc.ta / pc.matchs * 100);//每100盘推塔数
+            pc.bossPer100Matches = two(pc.roshan / pc.matchs * 100);//每100盘击杀肉山数
+        }
+
+        var onePlayer = playerCount['杜哥'];
+        for(var pname in playerCount){
+            var th = document.createElement('th');
+            th.innerHTML = pname;
+            document.getElementById('titleTr').appendChild(th);
+        }
+
+        var index = 0;
+        for(var t in onePlayer){
+            var tr = document.createElement('tr');
+            var nameTd = document.createElement('td');
+            nameTd.innerHTML = numberName(t) || t;
+            nameTd.style.backgroundColor = backgroundColor(index);
+            tr.appendChild(nameTd);
+            for(var pname in playerCount){
+                var valueTd = document.createElement('td');
+                var opc = playerCount[pname];
+                valueTd.innerHTML = opc[t];
+                tr.appendChild(valueTd);
+            }
+            $('playerCount').appendChild(tr);
+            index++;
+        }
+
+    }
 
     function two(n){
         return Math.round(n * 100) / 100;
     }
 
 
-    function doIt(ps, playerName){
+    function doIt(ps, playerName, goType){
 
         var useCount = [];
 
@@ -374,17 +369,24 @@
 
         for(var i = 0; i < tagNames.length; i++){//标签和值
             var t = tagNames[i];
-            //var score = Math.round((win[t] / total[t]) * 100);//标签胜率
-            var score = Math.round((win[t] / totalwin) * 100);//标签胜率
+            var score = 0;
+            if(goType == '胜率'){
+                score = Math.round((win[t] / total[t]) * 100);//标签，按胜率计算
+            }else{
+                score = Math.round((win[t] / totalwin) * 100);//标签，按胜场计算
+            }
             result[t] = score;
             //console.log(t + ":" + score);
         }
         for(var i = 0; i < typeNames.length; i++){//类别和值
             var t = typeNames[i];
-            //var score = Math.round((typeWin[t] / typeTotal[t]) * 100);//类别胜率
-            var score = Math.round((typeWin[t] / totaltypewin) * 100);//类别胜率
+            var score = 0;
+            if(goType == '胜率'){
+                score = Math.round((typeWin[t] / typeTotal[t]) * 100);//类别，按胜率计算
+            }else{
+                score = Math.round((typeWin[t] / totaltypewin) * 100);//类别，按胜场计算
+            }
             result[t] = score;
-            //console.log(t + ":" + typeWin[t] / typeTotal[t]);
         }
 
         var ouc = outputUseCount(playerName, useCount);
@@ -531,6 +533,7 @@
         }
     }
 
+    go('胜率');
     </script>
 </body>
 </html>
