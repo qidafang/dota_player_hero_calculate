@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+    table{
+        border-collapse:collapse;
+    }
+    th,td{
+        border: 1px solid black;
+        width: 100px;
+    }
+
+    tr:nth-child(odd){
+        background-color : #eee;
+    }
+    tr:nth-child(even){
+        background-color : #ccc;
+    }
+
+    th:nth-child(1),td:nth-child(1){
+        width: 200px;
+    }
+    </style>
+
+    <script src="heros.json"></script>
+    <script src="players.json"></script>
+
+    <!--黑夜无趣-->
+    <script src="players/duge.js"></script>
+    <!--性趣黑夜-->
+    <script src="players/duge_2.js"></script>
+    <!--多变双鱼-->
+    <script src="players/duge_3.js"></script>
+
+    <!--我叫6娃-->
+    <script src="players/feishen.js"></script>
+    <!--娜美爱佩刀-->
+    <script src="players/feishen_2.js"></script>
+    <!--晨轩轩轩-->
+    <script src="players/feishen_3.js"></script>
+    <!--肚皮是姑娘-->
+    <script src="players/feishen_4.js"></script>
+
+    <!--冷镜0413-->
+    <script src="players/guoguo.js"></script>
+    <!--冷镜1989-->
+    <script src="players/guoguo_2.js"></script>
+
+    <!--我叫李大为-->
+    <script src="players/laowu.js"></script>
+    <!--不爱听你的-->
+    <script src="players/laowu_2.js"></script>
+    <!--王PP庸医-->
+    <script src="players/laowu_3.js"></script>
+
+    <!--我是吴大熊-->
+    <script src="players/zhege.js"></script>
+    <!--zgdrzgdr-->
+    <script src="players/zhege_2.js"></script>
+
+    <!--我是大匪神-->
+    <script src="players/pangzi.js"></script>
+
+    <!--黑夜有趣-->
+    <script src="players/daishen.js"></script>
+
+    <!--月痕9873-->
+    <script src="players/liushen.js"></script>
+    <!-- 好男人95 -->
+    <script src="players/liushen_2.js"></script>
+    <!-- b4liuyuxin -->
+    <script src="players/liushen_3.js"></script>
+
+    <!--ztzl-->
+    <script src="players/_paoge.js"></script>
+
+    <!--钻井大神-->
+    <script src="players/_xg.js"></script>
+    <!--大将军救命-->
+    <script src="players/_longshen.js"></script>
+
+    <!--大哥430-->
+    <script src="players/_dage430.js"></script>
+    <!--大哥357-->
+    <script src="players/_dage357.js"></script>
+</head>
+<body>
+    <table>
+        <thead>
+        <tr id="titleTr">
+            <th></th>
+        </tr>
+        </thead>
+    </table>
+    <div id="theDiv" style="height:600px;overflow:auto;">
+        <table>
+            <tbody id="playerCount">
+            </tbody>
+        </table>
+    </div>
+
+
+    <script>
+    var tagNames = [
+    '近战', '远程',
+    '力量', '敏捷', '智力',
+    '辅助', '法师', '打野', '肉盾', 'Gank', '后期', '大后期',
+    '点控', '小团控', '团控', '减速', '沉默', '物爆', '法爆',
+    '推进', '治疗', '召唤', '隐身', '闪烁',
+    '不稳定', '特殊', '多线'
+    ];
+    var typeNames = [
+     'dps', 'push', 'gank', 'support', 'meat', 'war'
+    ];
+
+    var typeAvgs = {};
+
+    typeNames.forEach(function(tn){
+        var total = 0;
+        heros.forEach(function(h){
+            total += h[tn];
+        });
+        var avg = total / heros.length;
+        typeAvgs[tn] = avg;
+    });
+
+    var they = {
+        '杜哥' : [duge, duge_2, duge_3],
+        '匪神' : [feishen, feishen_2, feishen_3, feishen_4], 
+        '蝈蝈' : [guoguo, guoguo_2],
+        '老吴' : [laowu, laowu_2, laowu_3],
+        '胖子' : [pangzi], 
+        '哲哥' : [zhege, zhege_2],
+        '呆神' : [daishen],
+        '刘神' : [liushen, liushen_2, liushen_3]
+
+        //'炮哥' : [paoge]
+
+        //'刚神' : [xg],
+        //'龙神' : [longshen],
+
+        //'430' : [dage430],
+        //'357' : [dage357]
+    };
+
+    var heroCount = {};//英雄统计汇总
+    heros.forEach(function(h){
+        heroCount[h.name] = {
+            'name' : h.name,
+            'total' : 0,
+            'win' : 0,
+            'herokill' : 0,
+            'roshan' : 0,
+            'mvp' : 0,
+            'offline' : 0
+        };
+    });
+
+    var results = {};//所有人的统计结果汇总集合
+
+    for(var n in they){
+        var records = they[n];
+        var playerResult = doIt(records, n);
+        results[n] = playerResult;
+    }
+
+    var playerCount = results;
+
+
+/*
+    var heroCountList = [];
+    for(var hName in heroCount){
+        heroCountList.push(heroCount[hName]);
+    };
+    var lookName = 'offline';
+    heroCountList.sort(function(a, b){
+        return - (a[lookName] / a.total - b[lookName] / b.total);
+    });
+    warn(lookName + "最高的英雄：");
+    for(var i = 0; i < heroCountList.length; i++){
+        var h = heroCountList[i];
+        console.log(h.name + "" + two(h[lookName] / h.total * 100));
+    }
+    warn("==========");
+*/
+
+    for(var n in they){
+
+        var pc = playerCount[n];
+
+        var records = they[n];
+
+        pc.matchs = 0;
+        pc.wins = 0;
+        pc.losts = 0;
+        pc.kills = 0;
+        pc.deads = 0;
+        pc.assists = 0;
+
+        pc.mvps = 0;
+        pc.pianjiangs = 0;
+        pc.yinghuns = 0;
+
+        pc.zhengbu = 0;
+        pc.fanbu = 0;
+        pc.yeguai = 0;
+        pc.ta = 0;//摧毁塔
+        pc.jingji = 0;//经济
+        pc.roshan = 0;//杀死boss次数
+
+        records.forEach(function(r){
+
+            pc.wins += r.mjInfos.Win;
+            pc.losts += r.mjInfos.Lost;
+            pc.matchs += (r.mjInfos.Win + r.mjInfos.Lost);
+            pc.kills += r.mjInfos.HeroKill;
+            pc.deads += r.mjInfos.HeroDeath;
+            pc.assists += r.mjInfos.HeroAssist;
+            pc.mvps += r.mjInfos.MVP;
+
+            pc.pianjiangs += r.mjInfos.PianJiang;
+            pc.yinghuns += r.mjInfos.YingHun;
+
+            pc.zhengbu += r.mjInfos.HeroHit;
+            pc.fanbu += r.mjInfos.HeroDeny;
+            pc.yeguai += r.mjInfos.NeutralKill;
+            pc.ta += r.mjInfos.HitTower;
+            pc.roshan += r.mjInfos.Roshan;
+
+            pc.wins += r.ttInfos.Win;
+            pc.losts += r.ttInfos.Lost;
+            pc.matchs += (r.ttInfos.Win + r.ttInfos.Lost);
+            pc.kills += r.ttInfos.HeroKill;
+            pc.deads += r.ttInfos.HeroDeath;
+            pc.assists += r.ttInfos.HeroAssist;
+            pc.mvps += r.ttInfos.MVP;
+
+            pc.pianjiangs += r.ttInfos.PianJiang;
+            pc.yinghuns += r.ttInfos.YingHun;
+
+            pc.zhengbu += r.ttInfos.HeroHit;
+            pc.fanbu += r.ttInfos.HeroDeny;
+            pc.yeguai += r.ttInfos.NeutralKill;
+            pc.ta += r.ttInfos.HitTower;
+            pc.roshan += r.ttInfos.Roshan;
+        });
+
+        pc.jingji = (pc.zhengbu + pc.yeguai * 0.5 + pc.kills * 5 + pc.assists * 1 - pc.deads * 2 + pc.ta * 10) * 40 + 4000 * pc.matchs;
+        pc.ka = (pc.kills + pc.assists); 
+
+        pc.winRate = two(pc.wins / pc.matchs);//胜率
+        pc.killsPerMatch = two(pc.kills / pc.matchs);//场均人头
+        pc.deadsPerMatch = two(pc.deads / pc.matchs);//场均死亡
+        pc.assistsPerMatch = two(pc.assists / pc.matchs);//场均助攻
+        pc.kda = two((pc.kills + pc.assists) / pc.deads);//kda
+        pc.kHead = two(pc.kills / pc.assists);//k头指数
+        pc.mvpAndHunPer100Matches = two((pc.mvps + pc.yinghuns) / pc.matchs * 100);//场均mvp&英魂
+        pc.zhengbuPerMatch = two(pc.zhengbu / pc.matchs);//场均正补
+        pc.yeguaiPerMatch = two(pc.yeguai / pc.matchs);//场均击杀野怪
+        pc.moneyPerMatch = two(pc.jingji / pc.matchs);//场均金钱
+        pc.moneyPerHeadOrAssist = two(pc.jingji / pc.ka);//每人头or助攻所需金钱
+        pc.bad = two(pc.jingji / (pc.kills + pc.assists) * (pc.losts / (pc.wins + pc.losts)));//毒瘤指数
+        pc.towersPer100Matches = two(pc.ta / pc.matchs * 100);//每100盘推塔数
+        pc.bossPer100Matches = two(pc.roshan / pc.matchs * 100);//每100盘击杀肉山数
+    }
+
+    var onePlayer = playerCount['杜哥'];
+    for(var pname in playerCount){
+        var th = document.createElement('th');
+        th.innerHTML = pname;
+        document.getElementById('titleTr').appendChild(th);
+    }
+
+    var index = 0;
+    for(var t in onePlayer){
+        var tr = document.createElement('tr');
+        var nameTd = document.createElement('td');
+        nameTd.innerHTML = numberName(t) || t;
+        nameTd.style.backgroundColor = backgroundColor(index);
+        tr.appendChild(nameTd);
+        for(var pname in playerCount){
+            var valueTd = document.createElement('td');
+            var opc = playerCount[pname];
+            valueTd.innerHTML = opc[t];
+            tr.appendChild(valueTd);
+        }
+        $('playerCount').appendChild(tr);
+        index++;
+    }
+
+
+    function two(n){
+        return Math.round(n * 100) / 100;
+    }
+
+
+    function doIt(ps, playerName){
+
+        var useCount = [];
+
+        var win = {};//标签：胜场
+        var total = {};//标签：总场次
+        var typeWin = {};//类别：胜场
+        var typeTotal = {};//类别：总场次
+
+        for(var i = 0; i < tagNames.length; i++){
+            var t = tagNames[i];
+            win[t] = 0;
+            total[t] = 0;
+        }
+        for(var i = 0; i < typeNames.length; i++){
+            var t = typeNames[i];
+            typeWin[t] = 0;
+            typeTotal[t] = 0;
+        }
+
+
+        for(var i = 0; i < heros.length; i++){//遍历所有英雄
+            var h = heros[i];
+            var name = h.name;
+
+            var winCount = 0;//该英雄所有id胜场
+            var totalCount = 0;//该英雄所有id场次
+            var typeSumCount = 0;
+
+            ps.forEach(function(p){//遍历所有id
+                var infoThisId = null;//本id本英雄的数据
+                for(var j = 0; j < p.mjheroInfos.length && infoThisId == null; j++){
+                    var oneHero = p.mjheroInfos[j];
+                    if(changeName(oneHero.heroname) == name){
+                        infoThisId = oneHero;
+                    }
+                }
+                if(infoThisId != null){//这个号用过这个英雄
+                    var timesThisId = infoThisId.win + infoThisId.lost;//这个号这个英雄的场次
+                    var winCountThisId = infoThisId.win;//这个号这个英雄的胜场
+
+                    totalCount += timesThisId;
+                    winCount += winCountThisId;
+
+                    heroCount[name]['total'] += timesThisId;
+                    heroCount[name]['win'] += winCountThisId;
+                    heroCount[name]['herokill'] += infoThisId.herokill;
+                    heroCount[name]['roshan'] += infoThisId.roshan;
+                    heroCount[name]['mvp'] += infoThisId.mvp;
+                    heroCount[name]['offline'] += infoThisId.offline;
+                }
+
+            });
+
+            var heroWinRate = totalCount > 0 ? winCount / totalCount : 0;
+
+            useCount.push({
+                name : name,
+                totalCount : totalCount,
+                winCount : winCount,
+                winRate : heroWinRate
+            });
+
+            var tags = h.tags.split(",");
+            for(var k = 0; k < tags.length; k++){
+                var t = tags[k];
+                win[t] += winCount;
+                total[t] += totalCount;
+            }
+            for(var k = 0; k < typeNames.length; k++){
+                var t = typeNames[k];
+
+                if(h[t] > 5){//指标超过5代表是这个类别
+                }
+
+                typeWin[t] += winCount * (h[t] / typeAvgs[t]);
+                typeTotal[t] += totalCount;
+            }
+        }
+
+        var result = {};
+
+        var totalwin = 0;//总胜场
+        for(var i = 0; i < tagNames.length; i++){
+            var t = tagNames[i];
+            totalwin += win[t];
+        }
+        var totaltypewin = 0;//类别总分
+        for(var i = 0; i < typeNames.length; i++){
+            var t = typeNames[i];
+            totaltypewin += typeWin[t];
+        }
+
+        for(var i = 0; i < tagNames.length; i++){//标签和值
+            var t = tagNames[i];
+            //var score = Math.round((win[t] / total[t]) * 100);//标签胜率
+            var score = Math.round((win[t] / totalwin) * 100);//标签胜率
+            result[t] = score;
+            //console.log(t + ":" + score);
+        }
+        for(var i = 0; i < typeNames.length; i++){//类别和值
+            var t = typeNames[i];
+            //var score = Math.round((typeWin[t] / typeTotal[t]) * 100);//类别胜率
+            var score = Math.round((typeWin[t] / totaltypewin) * 100);//类别胜率
+            result[t] = score;
+            //console.log(t + ":" + typeWin[t] / typeTotal[t]);
+        }
+
+        var ouc = outputUseCount(playerName, useCount);
+        for(var i = 0; i < 5; i++){
+            result['第' + (i+1) + '擅长英雄'] = ouc[i];
+        }
+
+        return result;
+    }
+
+    function changeName(n){
+        var map = {
+            '舰队统帅':'海军上将',
+            '嗜血狂魔':'血魔',
+            '发条地精':'发条技师',
+            '蝮蛇':'冥界亚龙',
+            '熊猫酒仙':'酒仙',
+            '撼地神牛':'撼地者',
+            '刚背兽':'钢背兽',
+            '剑圣':'主宰',
+            '地穴刺客':'司夜刺客',
+            '半人马酋长':'半人马战行者',
+            '寒冬巨龙':'寒冬飞龙',
+            '地穴编织者':'编织者',
+            '月之女祭司':'月之公主',
+            '死灵法师':'瘟疫法师',
+            '闪电幽魂':'剃刀',
+            '牛头人酋长':'上古巨神',
+            '骷髅射手':'骷髅弓箭手',
+            '灵魂守卫':'恐怖利刃',
+            '矮人狙击手':'狙击手',
+            '奥林匹斯之王':'宙斯',
+            '地精工程师':'炸弹人',
+            '美杜莎':'蛇发女妖',
+            '黑曜毁灭者':'殁境神蚀者'
+        };
+        var newName = map[n];
+        return newName || n;
+    }
+
+
+    function log(msg){
+        console.log(msg);
+    }
+    function warn(msg){
+        console.warn(msg);
+    }
+    function error(msg){
+        console.error(msg);
+    }
+    function $(id){
+        return document.getElementById(id);
+    }
+
+    function outputUseCount(playerName, useCount){
+        var ouc = [];
+
+        var flag = 50;
+
+        useCount.sort(function(a, b){
+            if(a.totalCount >= flag && b.totalCount < flag){
+                return -1;
+            }else if(a.totalCount < flag && b.totalCount >= flag){
+                return 1;
+            }else if(a.totalCount >= flag && b.totalCount >= flag){
+                return -(a.winRate - b.winRate);
+            }else{
+                return -(a.totalCount - b.totalCount);
+            }
+        });
+
+        for(var i = 0; i < 5; i++){
+            var u = useCount[i];
+            var countColor = u.totalCount > flag ? 'red' : 'black';
+            var rateColor = u.winRate > 0.5 ? 'red' : 'black';
+            ouc.push(u.name + "<br>"
+             + "<span style='color:" + countColor + "'>" + u.totalCount + "</span>战<br>" 
+             + "<span style='color:" + rateColor + "'>" + two(u.winRate * 100) + "</span>%胜率");
+        }
+
+        return ouc;
+    }
+
+    function numberName(name){
+        return {
+            'dps' : '输出能力',
+            'push' : '推塔能力',
+            'gank' : '抓人能力',
+            'support' : '辅助能力',
+            'meat' : '肉盾能力',
+            'war' : '打团能力',
+            'matchs' : '总场次',
+            'wins' : '总胜场',
+            'losts' : '总败场',
+            'kills' : '总杀人数',
+            'deads' : '总死亡数',
+            'assists' : '总助攻数',
+            'mvps' : '总mvp数',
+            'pianjiangs' : '总偏将数',
+            'yinghuns' : '总英魂数',
+            'zhengbu' : '总正补数',
+            'fanbu' : '总反补数',
+            'yeguai' : '总杀死野怪数',
+            'ta' : '总破塔数',
+            'jingji' : '总经济',
+            'roshan' : '总击杀Roshan数',
+            'ka' : '总杀人数+总助攻数',
+            'winRate' : '胜率',
+            'killsPerMatch' : '场均杀人数',
+            'deadsPerMatch' : '场均死亡数',
+            'assistsPerMatch' : '场均助攻数',
+            'kda' : 'KDA',
+            'kHead' : 'K头指数^_^',
+            'mvpAndHunPer100Matches' : '每百场mvp&魂数',
+            'zhengbuPerMatch' : '每场正补数',
+            'yeguaiPerMatch' : '每场击杀野怪数',
+            'moneyPerMatch' : '每场金钱',
+            'moneyPerHeadOrAssist' : '每次击杀助攻消耗金钱',
+            'bad' : '毒瘤指数',
+            'towersPer100Matches' : '每百场破塔数',
+            'bossPer100Matches' : '每百场杀死Roshan数',
+        }[name]
+    };
+
+    function backgroundColor(i){
+        if(i < 2){
+            return '#FFF';
+        }else if(i < 5){
+            return '#FAE';
+        }else if(i < 12){
+            return '#AEE';
+        }else if(i < 24){
+            return '#DAC';
+        }else if(i < 27){
+            return '#DDD';
+        }else if(i < 33){
+            return '#AAA';
+        }else if(i < 38){
+            return '#EEB';
+        }else if(i < 55){
+            return '#BBB';
+        }else{
+            return '#DED';
+        }
+    }
+
+    </script>
+</body>
+</html>

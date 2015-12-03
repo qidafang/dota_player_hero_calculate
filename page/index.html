@@ -17,31 +17,37 @@
             var ts = h.tags.split(",");
             var num = 0;
             var txt = "";
+            var tagsCount = 0;
             ts.forEach(function(t){
+                tagsCount += 1;
                 if(player[t] == undefined){
                     //..
                 }else{
+                    var playerTagScore = player[t] > 0 ? player[t] : -20;//从来不用的，从0降低到-20
                     num += player[t];
                     txt += (t + ":" + player[t] + " ");
                 }
             });
+            var avgNum = num / tagsCount;
 
-            var totalScore = 0;
+            var sumScore = 0;
             scores.forEach(function(s){
-                var heroScore = h[s];
-                totalScore += heroScore;
+                var lines = {
+                    'dps' : 18.5,
+                    'push' : 17,
+                    'gank' : 17.5,
+                    'support' : 14.5,
+                    'meat' : 15,
+                    'war' : 18
+                };
+                //如果两个数都为负，即哲哥不看重肉，莉娜也刚好不肉，反而应该加分
+                var value = (player[s] - (lines[s] - 1)) * (h[s] - 5);
+                sumScore += value;
+                txt += (s + ":" + Math.round(value) + " ");
             });
-            var maxScore = (totalScore / 6) * 2;//理论最大值，该英雄所有指标加总除以6再乘以2，然后用任一指标除以此值，即得该英雄该指标的招牌程度
+            var avgScore = sumScore / 6;
 
-            scores.forEach(function(s){
-                var playerScore = player[s] / 2.5;//最大值为8
-                var heroScore = (h[s] / maxScore) * 10;//平均值为5
-                var value = (playerScore - 0) * (heroScore - 0);//相乘最大值为40
-                value = value.toFixed(2);
-                num += value * 1;
-                txt += (s + ":" + value + " ");
-            });
-            result.push({ name : h.name, num : num, txt : txt});
+            result.push({ name : h.name, num : avgNum * 1 + avgScore * 4, txt : txt});
         }
         result.sort(function(a, b){
             return b.num - a.num;
