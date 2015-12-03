@@ -228,22 +228,6 @@
             pc.ta += r.mjInfos.HitTower;
             pc.roshan += r.mjInfos.Roshan;
 
-            pc.wins += r.ttInfos.Win;
-            pc.losts += r.ttInfos.Lost;
-            pc.matchs += (r.ttInfos.Win + r.ttInfos.Lost);
-            pc.kills += r.ttInfos.HeroKill;
-            pc.deads += r.ttInfos.HeroDeath;
-            pc.assists += r.ttInfos.HeroAssist;
-            pc.mvps += r.ttInfos.MVP;
-
-            pc.pianjiangs += r.ttInfos.PianJiang;
-            pc.yinghuns += r.ttInfos.YingHun;
-
-            pc.zhengbu += r.ttInfos.HeroHit;
-            pc.fanbu += r.ttInfos.HeroDeny;
-            pc.yeguai += r.ttInfos.NeutralKill;
-            pc.ta += r.ttInfos.HitTower;
-            pc.roshan += r.ttInfos.Roshan;
         });
 
         pc.jingji = (pc.zhengbu + pc.yeguai * 0.5 + pc.kills * 5 + pc.assists * 1 - pc.deads * 2 + pc.ta * 10) * 40 + 4000 * pc.matchs;
