@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+    #info{
+        font-size:12px;
+        border: 1px solid #2277EE;
+    }
+    </style>
+    <script src="js/common.js"></script>
+    <script src="heros.json"></script>
+    <script src="players.json"></script>
+    <script src="goodat.json"></script>
+</head>
+<body>
+    <table id="theTable">
+        <tr>
+            <th>玩家</th>
+            <th>英雄</th>
+            <th>主任务</th>
+            <th>副任务</th>
+            <th>三任务</th>
+            <th>资源</th>
+        </tr>
+    </table>
+    <button onclick="go();">计算</button>
+    <div id="result">
+    </div>
+    <div id="info">
+    </div>
+    <script>
+        var tasks = {'dps':'输出', 'push':'推进', 'gank':'抓人', 'support':'辅助', 'meat':'肉盾', 'war':'团战'};
+
+        var ps = [], hs = [], t1s = [], t2s = [], t3s = [], ms = [];
+
+        var heromap = {};
+        heros.forEach(function(h){
+            heromap[h.name] = h;
+        });
+
+        for(var i = 0; i < 5; i++){
+            var tr = crt('tr');apd($('theTable'), tr);
+            var playerTd = crt('td');apd(tr, playerTd);
+            var heroTd = crt('td');apd(tr, heroTd);
+            var task1Td = crt('td');apd(tr, task1Td);
+            var task2Td = crt('td');apd(tr, task2Td);
+            var task3Td = crt('td');apd(tr, task3Td);
+            var moneyTd = crt('td');apd(tr, moneyTd);
+
+            var playerSelect = crt('select');apd(playerTd, playerSelect);ps.push(playerSelect);
+            playerSelect.id = i; playerSelect.onchange = changeHeros;
+            var heroSelect = crt('select');apd(heroTd, heroSelect);hs.push(heroSelect);
+            var task1Select = crt('select');apd(task1Td, task1Select);t1s.push(task1Select);
+            var task2Select = crt('select');apd(task2Td, task2Select);t2s.push(task2Select);
+            var task3Select = crt('select');apd(task3Td, task3Select);t3s.push(task3Select);
+            var moneySelect = crt('select');apd(moneyTd, moneySelect);ms.push(moneySelect);
+
+
+            for(var pn in players){
+                players[pn].name = pn;
+                var opt = crt('option');opt.innerText=pn;opt.value=pn;apd(playerSelect, opt);
+            }
+
+            playerSelect.options[i].selected = true;
+            playerSelect.onchange();
+
+            for(var tn in tasks){
+                var t = tasks[tn];
+                var opt1 = crt('option');opt1.innerText=t;opt1.value=tn;apd(task1Select, opt1);
+                var opt2 = crt('option');opt2.innerText=t;opt2.value=tn;apd(task2Select, opt2);
+                var opt3 = crt('option');opt3.innerText=t;opt3.value=tn;apd(task3Select, opt3);
+            };
+            for(var m = 4000; m <= 15000; m+=1000){
+                var opt = crt('option');opt.innerText=m;opt.value=m;apd(moneySelect, opt);
+            }
+
+            task1Select.options[i].selected = true;
+            task2Select.options[i+1].selected = true;
+            task3Select.options[i+2 > 5 ? 0 : i+2].selected = true;
+            moneySelect.options[6 - i].selected = true;
+        }
+
+        var info = [];
+
+        //计算！
+        function go(){
+            info.length = 0;
+
+            var totalMoney = 0;
+            ms.forEach(function(m){
+                totalMoney += m.value * 1;
+            });
+            if(totalMoney != 40000){
+                alert("共40000团队资源请合理分配！当前分配：" + totalMoney);
+            }
+
+            var taskScore = {};
+            for(var t in tasks){
+                taskScore[t] = 0;
+            };
+
+            for(var i = 0; i < 5; i++){
+                var player = players[ps[i].value];
+                var hero = heromap[hs[i].value];
+                var task1 = t1s[i].value;
+                var task2 = t2s[i].value;
+                var task3 = t3s[i].value;
+                var money = ms[i].value;
+
+                var ican = goodat[ps[i].value][hs[i].value];
+                if(ican > 80){
+                    addGood(player.name+":"+hero.name+"，好的！看本大神大腿级别的发挥吧！");
+                }else if(ican > 70){
+                    addGood(player.name+":"+hero.name+"选得不错，看我的！");
+                }else if(ican > 60){
+                    addGood(player.name+":"+hero.name+"啊，能玩倒是能玩……");
+                }else{
+                    addBad(player.name+":让我玩"+hero.name+"？雪崩！");
+                }
+
+                if(money < player.moneyPerMatch){
+                    addBad(player.name+":钱少了不会玩，我需要" + player.moneyPerMatch + "!");
+                }
+
+                taskScore[task1] += two(ok(player, hero, task1, money, 0.5, (ican / 100)));
+                taskScore[task2] += two(ok(player, hero, task2, money, 0.3, (ican / 100)));
+                taskScore[task3] += two(ok(player, hero, task3, money, 0.2, (ican / 100)));
+            }
+
+            var report = {};
+
+            $('result').innerHTML = "";
+            $('info').innerHTML = "";
+            show(taskScore);
+
+            info.forEach(function(i){
+                loginfo(i);
+            })
+        }
+
+        function show(taskScore){
+            for(var t in taskScore){
+                var color = taskScore[t] > 100 ? 'green' : 'red';
+                log(tasks[t] + ":" + "<span style='color:" + color + "'>" + two(taskScore[t]) + "</span>");
+            };
+        }
+
+        function changeHeros(){
+            var heroSelect = hs[this.id * 1];
+            var l = goodat[this.value];
+            var list = [];
+            for(var s in l){
+                list.push({name : s, score : l[s]});
+            }
+            list.sort(function(a, b){
+                var aok = a.score;
+                var bok = b.score;
+                return -(aok - bok);
+            });
+
+            heroSelect.options.length = 0;
+            list.forEach(function(g){
+                var opt = crt('option');opt.value=g.name;opt.innerText=g.name + "(" + g.score + ")";
+                apd(heroSelect, opt);
+            });
+        }
+
+        function ok(player, hero, task, money, weight, ican){
+            var result = player[task] + hero[task] * 10;
+            var rate = 1;
+            if(task == 'dps'){
+                var tagRates = {
+                    '大后期' : 0.5,
+                    '后期' : 0.3,
+                    '物爆' : 0.1,
+                    '法爆' : 0.1,
+                    '打野' : 0.1,
+                    '闪烁' : 0.1,
+                    '隐身' : 0.1
+                };
+                rate += addRates(player, hero, tagRates);
+            }else if(task == 'push'){
+                var tagRates = {
+                    '推进' : 0.5,
+                    '物爆' : 0.3,
+                    '召唤' : 0.2,
+                    '治疗' : 0.1
+                };
+                rate += addRates(player, hero, tagRates);
+            }else if(task == 'gank'){
+                var tagRates = {
+                    'Gank' : 0.4,
+                    '点控' : 0.2,
+                    '法爆' : 0.2,
+                    '小团控' : 0.1,
+                    '减速' : 0.1,
+                    '物爆' : 0.1,
+                    '隐身' : 0.1,
+                    '沉默' : 0.1
+                };
+                rate += addRates(player, hero, tagRates);
+            }else if(task == 'support'){
+                var tagRates = {
+                    '辅助' : 0.5,
+                    '法师' : 0.2,
+                    '点控' : 0.3,
+                    '法爆' : 0.2,
+                    '小团控' : 0.2,
+                    '治疗' : 0.1,
+                    '减速' : 0.1,
+                    '沉默' : 0.1
+                };
+                rate += addRates(player, hero, tagRates);
+            }else if(task == 'meat'){
+                var tagRates = {
+                    '肉盾' : 0.5,
+                    '治疗' : 0.3
+                };
+                rate += addRates(player, hero, tagRates);
+            }else if(task == 'war'){
+                var tagRates = {
+                    '团控' : 0.5,
+                    '小团控' : 0.2,
+                    '点控' : 0.1,
+                    '治疗' : 0.1
+                };
+                rate += addRates(player, hero, tagRates);
+            }
+
+            //金钱系数begin
+            var moneyRate = 1;
+            if(hasTag(hero, '大后期') && task == 'dps'){//大后期
+                if(money < 12000){
+                    moneyRate *= ((money * 0.5) / 12000);//只能发挥已有经济一半作用
+                    addBad(player.name + ": 大后期没起来！只能发挥" + two(moneyRate * 100) + "%的实力！");
+                }else{
+                    moneyRate *= (money / 12000);//装备越好效果越好
+                }
+            }
+            if(hasTag(hero, '后期') && task == 'dps' && money < 8000){//后期
+                if(money < 8000){
+                    moneyRate *= ((money * 0.8) / 8000);//只能发挥已有经济八成作用
+                    addBad(player.name + ": 后期没起来！" + hero.name + "只能发挥" + two(moneyRate * 100) + "%的实力！");
+                }else{
+                    moneyRate *= (money / 8000);//装备越好效果越好
+                }
+            }
+            if(money < player.moneyPerMatch){//钱少了不会玩
+                var playerRate = ((money * 0.8) / player.moneyPerMatch);
+                moneyRate *= playerRate;//只能发挥已有经济八成作用
+            }else{
+                var more = money - player.moneyPerMatch;
+                moneyRate *= (1 + (more / 2) / player.moneyPerMatch);//多出的钱只能发挥一半作用（因为不习惯）
+            }
+            var heroNeedMoney = hero.tags.split(",").length * 1000;
+            //金钱系数end
+
+            var finalscore = result * rate * ican * moneyRate * weight;
+
+            var noweight = result * rate * ican * moneyRate;
+            if(noweight < 50){
+                addBad(player.name + ":让我用" + hero.name + "打" + tasks[task] + "？？我打你妈！");
+            }else if(noweight < 100){
+                addBad(player.name + ":我的" + hero.name + "能打" + tasks[task] + "？怎么想的啊……");
+            }else if(noweight < 150){
+                addGood(player.name + ":" + hero.name + "来打" + tasks[task] + "啊，这主意还可以……");
+            }else if(noweight < 200){
+                addGood(player.name + ":" + hero.name + "用来打" + tasks[task] + "，是个不错的选择~");
+            }else{
+                addGood(player.name + ":让我用" + hero.name + "打" + tasks[task] + "，真是太机智了！");
+            }
+
+            console.warn(
+                player.name + "使用" + hero.name + "用来" + tasks[task] + 
+                "，基础得分：" + result + 
+                "系数：" + two(rate) + 
+                "会玩：" + two(ican) + 
+                "金钱系数：" + two(moneyRate) + 
+                "精力：" + two(weight) + 
+                "结果：" + two(result * rate * ican * moneyRate));
+            return finalscore;
+        }
+
+        function addRates(player, hero, tagRates){
+            rate = 0;
+            for(var tname in tagRates){
+                if(hasTag(hero, tname)){
+                    var playerRate = player[tname] / 50;
+                    var theRate = tagRates[tname] * playerRate;
+                    if(playerRate > 1.2){
+                        addGood(player.name + ":我能将" + hero.name + "的[" + tname + "]发挥得很好！")
+                    }else if(playerRate < 0.8){
+                        addBad(player.name + ":" + hero.name + "的[" + tname + "]在我手里发挥不出来呀……")
+                    }
+                    console.log(
+                        player.name + ":" + hero.name
+                         + "的[" + tname +
+                          "]，标签权重"+tagRates[tname]+
+                          "，玩家熟练"+(player[tname]/50)+
+                          "，结果"+tagRates[tname] * (player[tname] / 50)
+                    );
+                    rate += tagRates[tname] * (player[tname] / 50);
+                }
+            }
+            return rate;
+        }
+
+        function hasTag(hero, tag){
+            return hero.tags.split(",").indexOf(tag) != -1;
+        }
+
+        function addBad(s){
+            info.push("<span style='color:red'>" + s + "</span>");
+        }
+        function addGood(s){
+            info.push("<span style='color:green'>" + s + "</span>");
+        }
+
+    </script>
+</body>
+</html>

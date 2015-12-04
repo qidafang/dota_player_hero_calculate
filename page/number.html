@@ -23,6 +23,8 @@
     }
     </style>
 
+    <script src="js/common.js"></script>
+
     <script src="heros.json"></script>
     <script src="players.json"></script>
 
@@ -170,12 +172,17 @@
 
 
         var results = {};//所有人的统计结果汇总集合
+        var goodat = {};//所有人英雄评分集合
 
         for(var n in they){
             var records = they[n];
-            var playerResult = doIt(records, n, goType);
+            var playerResult = doIt(records, n, goType, goodat);
             results[n] = playerResult;
         }
+
+
+
+
 
         var playerCount = results;
 
@@ -267,14 +274,10 @@
             index++;
         }
 
+        console.log(tostr(results));
     }
 
-    function two(n){
-        return Math.round(n * 100) / 100;
-    }
-
-
-    function doIt(ps, playerName, goType){
+    function doIt(ps, playerName, goType, goodat){
 
         var useCount = [];
 
@@ -389,7 +392,7 @@
             result[t] = score;
         }
 
-        var ouc = outputUseCount(playerName, useCount);
+        var ouc = outputUseCount(playerName, useCount, goodat);
         for(var i = 0; i < 5; i++){
             result['第' + (i+1) + '擅长英雄'] = ouc[i];
         }
@@ -427,21 +430,8 @@
         return newName || n;
     }
 
-
-    function log(msg){
-        console.log(msg);
-    }
-    function warn(msg){
-        console.warn(msg);
-    }
-    function error(msg){
-        console.error(msg);
-    }
-    function $(id){
-        return document.getElementById(id);
-    }
-
-    function outputUseCount(playerName, useCount){
+    function outputUseCount(playerName, useCount, goodat){
+        goodat[playerName] = {};
         var ouc = [];
 
         var flag = 50;
@@ -466,6 +456,17 @@
              + "<span style='color:" + countColor + "'>" + u.totalCount + "</span>战<br>" 
              + "<span style='color:" + rateColor + "'>" + two(u.winRate * 100) + "</span>%胜率");
         }
+
+        useCount.forEach(function(uc){
+            var score = 0;
+            //50分会玩
+            if(uc.totalCount > 10){
+                score += 50;
+            }
+            //50分胜率
+            score += uc.winRate * 50;
+            goodat[playerName][uc.name] = two(score);
+        });
 
         return ouc;
     }
