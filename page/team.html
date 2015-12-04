@@ -24,7 +24,8 @@
             <th>资源</th>
         </tr>
     </table>
-    <button onclick="go();">计算</button>
+    <span id="money"></span>
+    <button id="btn" onclick="go();">计算</button>
     <div id="result">
     </div>
     <div id="info">
@@ -74,6 +75,7 @@
             for(var m = 4000; m <= 15000; m+=1000){
                 var opt = crt('option');opt.innerText=m;opt.value=m;apd(moneySelect, opt);
             }
+            moneySelect.onchange = changeMoney;
 
             task1Select.options[i].selected = true;
             task2Select.options[i+1].selected = true;
@@ -82,15 +84,12 @@
         }
 
         var info = [];
+        var totalMoney = 40000;
 
         //计算！
         function go(){
             info.length = 0;
 
-            var totalMoney = 0;
-            ms.forEach(function(m){
-                totalMoney += m.value * 1;
-            });
             if(totalMoney != 40000){
                 alert("共40000团队资源请合理分配！当前分配：" + totalMoney);
             }
@@ -164,6 +163,17 @@
                 var opt = crt('option');opt.value=g.name;opt.innerText=g.name + "(" + g.score + ")";
                 apd(heroSelect, opt);
             });
+        }
+
+        function changeMoney(){
+            totalMoney = 0;
+            ms.forEach(function(m){
+                totalMoney += m.value * 1;
+            });
+            var color = totalMoney == 40000 ? 'green' : 'red';
+            $('money').innerHTML = '请将40000的总经济做合理分配！目前总经济：' + totalMoney;
+            $('money').style.color = color;
+            $('btn').style.display = color == 'green' ? '' : 'none';
         }
 
         function ok(player, hero, task, money, weight, ican){
