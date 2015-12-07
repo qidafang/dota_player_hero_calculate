@@ -140,7 +140,7 @@
 
         function show(taskScore){
             for(var t in taskScore){
-                var color = taskScore[t] > 100 ? 'green' : 'red';
+                var color = taskScore[t] > 120 ? 'green' : 'red';
                 log(tasks[t] + ":" + "<span style='color:" + color + "'>" + two(taskScore[t]) + "</span>");
             };
         }
